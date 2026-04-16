@@ -1,0 +1,14 @@
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    ports:
+      - "8123:8123"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ha-config:/config
+      - ./custom_components/pigpio:/config/custom_components/pigpio:ro
+    restart: unless-stopped
+
+volumes:
+  ha-config:

@@ -1,0 +1,52 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to PiGPIO Daemon",
+        "description": "Enter the hostname and port of the Raspberry Pi running the pigpio daemon.",
+        "data": {
+          "host": "Host",
+          "port": "Port"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to pigpio daemon. Ensure pigpiod is running on the target host."
+    },
+    "abort": {
+      "already_configured": "This PiGPIO host is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "menu_options": {
+          "add_pin": "Add GPIO pin",
+          "remove_pin": "Remove GPIO pin"
+        }
+      },
+      "add_pin": {
+        "title": "Add GPIO Pin",
+        "data": {
+          "gpio": "GPIO Number",
+          "name": "Name",
+          "type": "Pin Type",
+          "pull_mode": "Pull Mode (inputs only)",
+          "invert_logic": "Invert Logic"
+        }
+      },
+      "remove_pin": {
+        "title": "Remove GPIO Pin",
+        "data": {
+          "gpio": "GPIO Pin to Remove"
+        }
+      }
+    },
+    "abort": {
+      "no_pins": "No GPIO pins configured to remove."
+    },
+    "error": {
+      "gpio_in_use": "This GPIO number is already configured."
+    }
+  }
+}
