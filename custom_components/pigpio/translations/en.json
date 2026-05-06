@@ -8,10 +8,18 @@
           "host": "Host",
           "port": "Port"
         }
+      },
+      "mac": {
+        "title": "MAC Address",
+        "description": "Could not automatically discover the MAC address. Enter the MAC address of the Raspberry Pi (e.g. from `ip link` or the device label).",
+        "data": {
+          "mac": "MAC Address"
+        }
       }
     },
     "error": {
-      "cannot_connect": "Cannot connect to pigpio daemon. Ensure pigpiod is running on the target host."
+      "cannot_connect": "Cannot connect to pigpio daemon. Ensure pigpiod is running on the target host.",
+      "invalid_mac": "Enter a valid MAC address (e.g. AA:BB:CC:DD:EE:FF)."
     },
     "abort": {
       "already_configured": "This PiGPIO host is already configured."
@@ -31,8 +39,13 @@
           "gpio": "GPIO Number",
           "name": "Name",
           "type": "Pin Type",
-          "pull_mode": "Pull Mode (inputs only)",
           "invert_logic": "Invert Logic"
+        }
+      },
+      "add_input_details": {
+        "title": "Add Input GPIO Pin",
+        "data": {
+          "pull_mode": "Pull Mode"
         }
       },
       "remove_pin": {
@@ -46,7 +59,8 @@
       "no_pins": "No GPIO pins configured to remove."
     },
     "error": {
-      "gpio_in_use": "This GPIO number is already configured."
+      "gpio_in_use": "This GPIO number is already configured.",
+      "invalid_name": "Enter a pin name."
     }
   }
 }

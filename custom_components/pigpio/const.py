@@ -4,6 +4,7 @@ DOMAIN = "pigpio"
 
 DEFAULT_PORT = 8888
 
+CONF_MAC = "mac"
 CONF_PINS = "pins"
 CONF_PIN_NUMBER = "gpio"
 CONF_PIN_NAME = "name"

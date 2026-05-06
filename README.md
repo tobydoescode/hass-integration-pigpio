@@ -1,6 +1,8 @@
 # Home Assistant PiGPIO Integration
 
-A custom integration that exposes GPIO pins on a remote Raspberry Pi (via the [pigpio](https://abyz.me.uk/rpi/pigpio/) daemon) as Home Assistant entities.
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=tobydoescode&repository=hass-integration-pigpio&category=integration)
+
+A [HACS](https://hacs.xyz)-compatible custom integration that exposes GPIO pins on a remote Raspberry Pi (via the [pigpio](https://abyz.me.uk/rpi/pigpio/) daemon) as Home Assistant entities.
 
 ## Features
 
@@ -17,6 +19,15 @@ Pins are added and removed through the HA UI; multiple pins per daemon are suppo
 
 ## Installation
 
+### HACS (recommended)
+
+1. Open HACS in your Home Assistant instance
+2. Go to **Integrations** → **Custom repositories**
+3. Add this repository URL and select **Integration** as the category
+4. Install **PiGPIO** and restart Home Assistant
+
+### Manual
+
 Copy the `custom_components/pigpio` directory into your Home Assistant `config/custom_components/` directory and restart Home Assistant.
 
 ## Configuration
@@ -25,14 +36,17 @@ Copy the `custom_components/pigpio` directory into your Home Assistant `config/c
 2. Search for **PiGPIO**
 3. Enter the **Host** and **Port** of the machine running `pigpiod` (default port `8888`)
 
+Duplicate daemon entries are detected after trimming host whitespace and normalizing host casing. DNS aliases and IP addresses for the same daemon are not resolved as duplicates.
+
 Once the daemon connection is established, open **Configure** on the integration to manage pins:
 
 - **Add GPIO pin** — specify:
   - **GPIO Number** (0–31)
   - **Name** — used as the entity name
   - **Pin Type** — `Input (Binary Sensor)` or `Output (Switch)`
-  - **Pull Mode** — `Pull Up`, `Pull Down`, or `None` (inputs only)
   - **Invert Logic** — flip the reported/applied state
+  - For input pins, the next step asks for **Pull Mode**: `Pull Up`, `Pull Down`, or `None`
+  - Output pins do not use pull mode and no pull-mode value is stored
 - **Remove GPIO pin** — pick from the list of configured pins
 
 ## Development
@@ -56,9 +70,10 @@ Once the daemon connection is established, open **Configure** on the integration
 |---|---|
 | `task sync` | Install Python dependencies |
 | `task pre-commit:install` | Install git pre-commit hooks |
-| `task lint` | Run ruff linter and format check |
-| `task lint:fix` | Auto-fix lint and formatting issues |
+| `task lint` | Run Ruff lint and format checks |
+| `task lint:fix` | Auto-fix Ruff lint issues and format Python files |
 | `task test` | Run pytest |
+| `task test:coverage` | Run tests with coverage report |
 | `task dev` | Start Home Assistant in Docker |
 | `task dev:stop` | Stop Home Assistant |
 | `task dev:restart` | Restart Home Assistant (after code changes) |
@@ -102,4 +117,4 @@ Once the daemon connection is established, open **Configure** on the integration
    task dev:stop
    ```
 
-No mocked daemon is bundled — full end-to-end testing requires a real `pigpiod`. Unit tests (`task test`) run against `pytest-homeassistant-custom-component` without hardware.
+Unit tests use mocked pigpio objects and do not require GPIO hardware. End-to-end testing requires a real `pigpiod` daemon.

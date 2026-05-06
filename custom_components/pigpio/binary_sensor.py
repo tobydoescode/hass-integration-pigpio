@@ -10,10 +10,10 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
     CONF_INVERT_LOGIC,
-    CONF_PINS,
     CONF_PIN_NAME,
     CONF_PIN_NUMBER,
     CONF_PIN_TYPE,
+    CONF_PINS,
     PIN_TYPE_INPUT,
 )
 from .coordinator import PigpioCoordinator
@@ -42,17 +42,14 @@ class PigpioBinarySensor(CoordinatorEntity[PigpioCoordinator], BinarySensorEntit
 
     _attr_has_entity_name = True
 
-    def __init__(
-        self, coordinator: PigpioCoordinator, pin_config: dict
-    ) -> None:
+    def __init__(self, coordinator: PigpioCoordinator, pin_config: dict) -> None:
         """Initialize the binary sensor."""
         super().__init__(coordinator)
         self._gpio: int = pin_config[CONF_PIN_NUMBER]
         self._invert: bool = pin_config.get(CONF_INVERT_LOGIC, False)
         self._attr_name = pin_config[CONF_PIN_NAME]
-        self._attr_unique_id = (
-            f"{coordinator.host}:{coordinator.port}_gpio{self._gpio}"
-        )
+        self._attr_unique_id = f"{coordinator.host}:{coordinator.port}_gpio{self._gpio}"
+        self._attr_device_info = coordinator.device_info
 
     @property
     def is_on(self) -> bool | None:

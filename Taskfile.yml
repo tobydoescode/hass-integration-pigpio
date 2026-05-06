@@ -28,6 +28,11 @@ tasks:
     cmds:
       - uv run pytest tests/ -v
 
+  test:coverage:
+    desc: Run tests with coverage report
+    cmds:
+      - uv run pytest tests/ --cov=custom_components/pigpio --cov-report=term-missing --cov-report=html
+
   dev:
     desc: Start Home Assistant dev instance
     cmds:
