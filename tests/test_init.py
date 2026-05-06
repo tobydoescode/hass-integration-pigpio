@@ -9,6 +9,7 @@ from homeassistant.config_entries import ConfigEntryState
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.pigpio.const import (
+    CONF_MAC,
     CONF_PIN_NAME,
     CONF_PIN_NUMBER,
     CONF_PIN_TYPE,
@@ -116,3 +117,66 @@ async def test_setup_entry_fails_when_daemon_unreachable(hass):
         await hass.async_block_till_done()
 
     assert entry.state is ConfigEntryState.SETUP_RETRY
+
+
+@pytest.mark.asyncio
+async def test_migrate_v1_1_to_v1_2_discovers_mac(hass):
+    """Test migration from 1.1 adds MAC via ARP discovery."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="PiGPIO",
+        data={"host": "pi.local", "port": 8888},
+        unique_id="pi.local:8888",
+        version=1,
+        minor_version=1,
+    )
+    entry.add_to_hass(hass)
+    fake_pi = FakePigpioPi()
+
+    with (
+        patch(
+            "custom_components.pigpio.config_flow._discover_mac",
+            return_value="aa:bb:cc:dd:ee:ff",
+        ),
+        patch("custom_components.pigpio.coordinator.pigpio.pi", return_value=fake_pi),
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert entry.state is ConfigEntryState.LOADED
+    assert entry.data[CONF_MAC] == "aa:bb:cc:dd:ee:ff"
+    assert entry.minor_version == 2
+
+
+@pytest.mark.asyncio
+async def test_migrate_v1_1_fails_when_mac_not_discoverable(hass):
+    """Test migration fails if MAC cannot be discovered."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="PiGPIO",
+        data={"host": "pi.local", "port": 8888},
+        unique_id="pi.local:8888",
+        version=1,
+        minor_version=1,
+    )
+    entry.add_to_hass(hass)
+
+    with patch("custom_components.pigpio.config_flow._discover_mac", return_value=None):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert entry.state is ConfigEntryState.MIGRATION_ERROR
+
+
+@pytest.mark.asyncio
+async def test_migrate_skipped_when_already_v1_2(hass):
+    """Test no migration when entry is already at 1.2."""
+    fake_pi = FakePigpioPi()
+    entry = make_entry(hass)
+
+    with patch("custom_components.pigpio.coordinator.pigpio.pi", return_value=fake_pi):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert entry.state is ConfigEntryState.LOADED
+    assert entry.data[CONF_MAC] == "aa:bb:cc:dd:ee:ff"

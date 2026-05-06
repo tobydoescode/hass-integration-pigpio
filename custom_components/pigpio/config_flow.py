@@ -75,6 +75,7 @@ class PigpioConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for PiGPIO."""
 
     VERSION = 1
+    MINOR_VERSION = 2
 
     _discovered_host: str | None = None
     _discovered_port: int | None = None
