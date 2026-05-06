@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
@@ -43,7 +45,7 @@ class PigpioBinarySensor(CoordinatorEntity[PigpioCoordinator], BinarySensorEntit
 
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator: PigpioCoordinator, pin_config: dict) -> None:
+    def __init__(self, coordinator: PigpioCoordinator, pin_config: dict[str, Any]) -> None:
         """Initialize the binary sensor."""
         super().__init__(coordinator)
         self._gpio: int = pin_config[CONF_PIN_NUMBER]

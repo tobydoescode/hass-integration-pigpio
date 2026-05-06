@@ -46,7 +46,7 @@ class PigpioSwitch(CoordinatorEntity[PigpioCoordinator], SwitchEntity):  # type:
     _attr_has_entity_name = True
     _attr_assumed_state = True
 
-    def __init__(self, coordinator: PigpioCoordinator, pin_config: dict) -> None:
+    def __init__(self, coordinator: PigpioCoordinator, pin_config: dict[str, Any]) -> None:
         """Initialize the switch."""
         super().__init__(coordinator)
         self._gpio: int = pin_config[CONF_PIN_NUMBER]
