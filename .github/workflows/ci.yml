@@ -18,7 +18,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install dependencies
         run: uv sync --all-extras
@@ -28,6 +28,9 @@ jobs:
 
       - name: Ruff format check
         run: uv run ruff format --check custom_components/ tests/
+
+      - name: Pyright
+        run: uv run pyright custom_components/pigpio/
 
       - name: Pytest with coverage
         run: uv run pytest tests/ -v --cov=custom_components/pigpio --cov-report=term-missing --cov-report=xml

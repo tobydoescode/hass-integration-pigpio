@@ -6,9 +6,10 @@ from typing import Any
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from propcache.api import cached_property
 
 from .const import (
     CONF_INVERT_LOGIC,
@@ -39,7 +40,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class PigpioSwitch(CoordinatorEntity[PigpioCoordinator], SwitchEntity):
+class PigpioSwitch(CoordinatorEntity[PigpioCoordinator], SwitchEntity):  # type: ignore[reportIncompatibleVariableOverride]
     """A switch backed by a remote GPIO output pin."""
 
     _attr_has_entity_name = True
@@ -54,7 +55,13 @@ class PigpioSwitch(CoordinatorEntity[PigpioCoordinator], SwitchEntity):
         self._attr_unique_id = f"{coordinator.host}:{coordinator.port}_gpio{self._gpio}"
         self._attr_device_info = coordinator.device_info
 
-    @property
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Invalidate cached properties and write state."""
+        vars(self).pop("is_on", None)
+        super()._handle_coordinator_update()
+
+    @cached_property
     def is_on(self) -> bool | None:
         """Return true if the output pin is high, accounting for inversion."""
         if self.coordinator.data is None:

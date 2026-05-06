@@ -54,7 +54,7 @@ class PigpioCoordinator(DataUpdateCoordinator[dict[int, int]]):
         self.host: str = entry.data[CONF_HOST]
         self.port: int = entry.data[CONF_PORT]
         self.pi: pigpio.pi | None = None
-        self._callbacks: dict[int, pigpio.callback] = {}
+        self._callbacks: dict[int, Any] = {}
         self._pending_output_states: dict[int, int] = {}
 
     @property

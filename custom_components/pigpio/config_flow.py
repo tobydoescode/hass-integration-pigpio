@@ -8,10 +8,14 @@ import subprocess
 from typing import Any
 
 import voluptuous as vol
-from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlow
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import callback
-from homeassistant.data_entry_flow import FlowResult
 
 import pigpio
 
@@ -80,7 +84,7 @@ class PigpioConfigFlow(ConfigFlow, domain=DOMAIN):
     _discovered_host: str | None = None
     _discovered_port: int | None = None
 
-    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle the initial step — host and port."""
         errors: dict[str, str] = {}
 
@@ -119,7 +123,7 @@ class PigpioConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_mac(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_mac(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Prompt user to manually enter the MAC address."""
         errors: dict[str, str] = {}
 
@@ -157,14 +161,16 @@ class PigpioOptionsFlow(OptionsFlow):
 
     _pending_pin: dict[str, Any] | None = None
 
-    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Show the options menu."""
         return self.async_show_menu(
             step_id="init",
             menu_options=["add_pin", "remove_pin"],
         )
 
-    async def async_step_add_pin(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_add_pin(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """Handle adding a new GPIO pin."""
         errors: dict[str, str] = {}
 
@@ -213,7 +219,7 @@ class PigpioOptionsFlow(OptionsFlow):
 
     async def async_step_add_input_details(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Collect input-only GPIO settings."""
         if self._pending_pin is None:
             return await self.async_step_add_pin()
@@ -241,7 +247,9 @@ class PigpioOptionsFlow(OptionsFlow):
             ),
         )
 
-    async def async_step_remove_pin(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_remove_pin(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """Handle removing a GPIO pin."""
         pins = list(self.config_entry.options.get(CONF_PINS, []))
 
