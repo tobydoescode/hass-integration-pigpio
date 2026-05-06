@@ -18,6 +18,7 @@ from custom_components.pigpio.const import (
     PIN_TYPE_INPUT,
     PIN_TYPE_OUTPUT,
 )
+from custom_components.pigpio.diagnostics import async_get_config_entry_diagnostics
 
 from .conftest import FakePigpioPi, make_config_entry_data
 
@@ -180,3 +181,33 @@ async def test_migrate_skipped_when_already_v1_2(hass):
 
     assert entry.state is ConfigEntryState.LOADED
     assert entry.data[CONF_MAC] == "aa:bb:cc:dd:ee:ff"
+
+
+@pytest.mark.asyncio
+async def test_diagnostics(hass):
+    """Test diagnostics returns expected structure."""
+    fake_pi = FakePigpioPi(levels={17: 1})
+    entry = make_entry(
+        hass,
+        {
+            CONF_PINS: [
+                {
+                    CONF_PIN_NUMBER: 17,
+                    CONF_PIN_NAME: "Door",
+                    CONF_PIN_TYPE: PIN_TYPE_INPUT,
+                }
+            ]
+        },
+    )
+
+    with patch("custom_components.pigpio.coordinator.pigpio.pi", return_value=fake_pi):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    diag = await async_get_config_entry_diagnostics(hass, entry)
+
+    assert diag["config"]["host"] == "pi.local"
+    assert diag["config"]["mac"] == "**REDACTED**"
+    assert diag["connection"]["connected"] is True
+    assert diag["pin_states"] == {17: 1}
+    assert len(diag["pins"]) == 1
