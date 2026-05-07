@@ -12,6 +12,11 @@ from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC, DeviceInfo
+from homeassistant.helpers.issue_registry import (
+    IssueSeverity,
+    async_create_issue,
+    async_delete_issue,
+)
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 import pigpio
@@ -56,6 +61,7 @@ class PigpioCoordinator(DataUpdateCoordinator[dict[int, int]]):
         self.pi: pigpio.pi | None = None
         self._callbacks: dict[int, Any] = {}
         self._pending_output_states: dict[int, int] = {}
+        self._consecutive_failures: int = 0
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -93,14 +99,42 @@ class PigpioCoordinator(DataUpdateCoordinator[dict[int, int]]):
             await self._connect()
             connected = await self.hass.async_add_executor_job(self._check_connection)
             if not connected:
+                self._consecutive_failures += 1
+                self._maybe_create_repair()
                 raise UpdateFailed(f"Cannot connect to pigpio daemon at {self.host}:{self.port}")
             await self._setup_pins()
             _LOGGER.info("Reconnected to pigpio at %s:%s", self.host, self.port)
+
+        self._clear_repair()
 
         try:
             return await self.hass.async_add_executor_job(self._read_all_configured_pins)
         except OSError as err:
             raise UpdateFailed(str(err)) from err
+
+    def _maybe_create_repair(self) -> None:
+        """Create a repair issue after repeated connection failures."""
+        if self._consecutive_failures < 3:
+            return
+        async_create_issue(
+            self.hass,
+            DOMAIN,
+            f"daemon_unreachable_{self.config_entry.entry_id}",
+            is_fixable=False,
+            severity=IssueSeverity.ERROR,
+            translation_key="daemon_unreachable",
+            translation_placeholders={"host": self.host, "port": str(self.port)},
+        )
+
+    def _clear_repair(self) -> None:
+        """Clear connection repair issue on successful communication."""
+        if self._consecutive_failures > 0:
+            self._consecutive_failures = 0
+            async_delete_issue(
+                self.hass,
+                DOMAIN,
+                f"daemon_unreachable_{self.config_entry.entry_id}",
+            )
 
     def _check_connection(self) -> bool:
         """Actively check if the pigpio connection is alive."""

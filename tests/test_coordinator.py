@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pytest
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.issue_registry import async_get as async_get_issue_registry
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from custom_components.pigpio.const import (
@@ -418,3 +419,70 @@ async def test_watchdog_timeout_ignored_in_callback(hass):
     await hass.async_block_till_done()
 
     assert coordinator.data == {17: 0}
+
+
+@pytest.mark.asyncio
+async def test_repair_created_after_repeated_failures(hass):
+    """Test repair issue created after 3 consecutive connection failures."""
+    dead_pi = FakePigpioPi(connected=False)
+    entry = make_entry(
+        {
+            CONF_PINS: [
+                {
+                    CONF_PIN_NUMBER: 17,
+                    CONF_PIN_NAME: "Door",
+                    CONF_PIN_TYPE: PIN_TYPE_INPUT,
+                }
+            ]
+        }
+    )
+
+    coordinator = PigpioCoordinator(hass, entry)
+    coordinator.pi = dead_pi
+
+    with patch("custom_components.pigpio.coordinator.pigpio.pi", return_value=dead_pi):
+        for _ in range(3):
+            with pytest.raises(UpdateFailed):
+                await coordinator._async_update_data()
+
+    issue_registry = async_get_issue_registry(hass)
+    issue = issue_registry.async_get_issue("pigpio", f"daemon_unreachable_{entry.entry_id}")
+    assert issue is not None
+    assert issue.translation_key == "daemon_unreachable"
+
+
+@pytest.mark.asyncio
+async def test_repair_cleared_on_reconnect(hass):
+    """Test repair issue cleared when connection restored."""
+    dead_pi = FakePigpioPi(connected=False)
+    alive_pi = FakePigpioPi(levels={17: 0})
+    entry = make_entry(
+        {
+            CONF_PINS: [
+                {
+                    CONF_PIN_NUMBER: 17,
+                    CONF_PIN_NAME: "Door",
+                    CONF_PIN_TYPE: PIN_TYPE_INPUT,
+                }
+            ]
+        }
+    )
+
+    coordinator = PigpioCoordinator(hass, entry)
+    coordinator.pi = dead_pi
+
+    with patch("custom_components.pigpio.coordinator.pigpio.pi", return_value=dead_pi):
+        for _ in range(3):
+            with pytest.raises(UpdateFailed):
+                await coordinator._async_update_data()
+
+    issue_registry = async_get_issue_registry(hass)
+    assert (
+        issue_registry.async_get_issue("pigpio", f"daemon_unreachable_{entry.entry_id}") is not None
+    )
+
+    with patch("custom_components.pigpio.coordinator.pigpio.pi", return_value=alive_pi):
+        coordinator.pi = alive_pi
+        await coordinator._async_update_data()
+
+    assert issue_registry.async_get_issue("pigpio", f"daemon_unreachable_{entry.entry_id}") is None

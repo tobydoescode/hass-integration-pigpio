@@ -25,6 +25,12 @@
       "already_configured": "This PiGPIO host is already configured."
     }
   },
+  "issues": {
+    "daemon_unreachable": {
+      "title": "PiGPIO daemon unreachable",
+      "description": "Cannot connect to the pigpio daemon at {host}:{port}. Ensure pigpiod is running and reachable from Home Assistant."
+    }
+  },
   "options": {
     "step": {
       "init": {
