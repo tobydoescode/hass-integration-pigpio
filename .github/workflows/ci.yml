@@ -33,12 +33,37 @@ jobs:
         run: uv run pyright custom_components/pigpio/
 
       - name: Pytest with coverage
-        run: uv run pytest tests/ -v --cov=custom_components/pigpio --cov-report=term-missing --cov-report=xml
+        run: |
+          set -euo pipefail
+          uv run pytest tests/ -v \
+            --cov=custom_components/pigpio \
+            --cov-report=term-missing \
+            --cov-report=html:coverage-html \
+            --cov-report=xml:coverage.xml \
+            | tee coverage.txt
 
-      - name: Coverage comment on PR
-        if: github.event_name == 'pull_request'
-        uses: py-cov-action/python-coverage-comment-action@v3
+      - name: Write coverage summary
+        if: always()
+        run: |
+          {
+            echo "## Test Coverage"
+            echo ""
+            echo '```'
+            if [ -f coverage.txt ]; then
+              sed -n '/Name .* Stmts .* Miss .* Cover/,/TOTAL/p' coverage.txt
+            else
+              echo "coverage.txt was not generated."
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v7
         with:
-          GITHUB_TOKEN: ${{ github.token }}
-          MINIMUM_GREEN: 90
-          MINIMUM_ORANGE: 75
+          name: coverage-reports
+          path: |
+            coverage.txt
+            coverage.xml
+            coverage-html/
+          if-no-files-found: warn
