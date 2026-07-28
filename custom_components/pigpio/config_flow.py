@@ -66,7 +66,7 @@ def _discover_mac(host: str) -> str | None:
         output = subprocess.check_output(
             ["arp", "-n", ip], timeout=5, text=True, stderr=subprocess.DEVNULL
         )
-    except (subprocess.SubprocessError, FileNotFoundError):
+    except subprocess.SubprocessError, FileNotFoundError:
         return None
     for line in output.splitlines():
         match = MAC_REGEX.search(line)
